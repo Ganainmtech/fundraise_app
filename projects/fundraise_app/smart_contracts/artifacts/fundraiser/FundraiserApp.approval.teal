@@ -1,0 +1,242 @@
+#pragma version 10
+
+smart_contracts.fundraiser.contract.FundraiserApp.approval_program:
+    // smart_contracts/fundraiser/contract.py:10
+    // class FundraiserApp(arc4.ARC4Contract):
+    method "create_campaign(uint64)void"
+    method "contribute(pay)void"
+    method "check_goal()uint64"
+    method "withdraw_funds()void"
+    txna ApplicationArgs 0
+    match main_create_campaign_route@1 main_contribute_route@2 main_check_goal_route@3 main_withdraw_funds_route@4
+    err // reject transaction
+
+main_create_campaign_route@1:
+    // smart_contracts/fundraiser/contract.py:14-17
+    // @arc4.abimethod(
+    //     allow_actions=["NoOp"],  # Allow only NoOp actions
+    //     create="require",        # Require this method for contract creation
+    // )
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    !
+    assert // is creating
+    // smart_contracts/fundraiser/contract.py:10
+    // class FundraiserApp(arc4.ARC4Contract):
+    txna ApplicationArgs 1
+    btoi
+    // smart_contracts/fundraiser/contract.py:14-17
+    // @arc4.abimethod(
+    //     allow_actions=["NoOp"],  # Allow only NoOp actions
+    //     create="require",        # Require this method for contract creation
+    // )
+    callsub create_campaign
+    int 1
+    return
+
+main_contribute_route@2:
+    // smart_contracts/fundraiser/contract.py:23
+    // @arc4.abimethod
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    // smart_contracts/fundraiser/contract.py:10
+    // class FundraiserApp(arc4.ARC4Contract):
+    txn GroupIndex
+    int 1
+    -
+    dup
+    gtxns TypeEnum
+    int pay
+    ==
+    assert // transaction type is pay
+    // smart_contracts/fundraiser/contract.py:23
+    // @arc4.abimethod
+    callsub contribute
+    int 1
+    return
+
+main_check_goal_route@3:
+    // smart_contracts/fundraiser/contract.py:29
+    // @arc4.abimethod
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    callsub check_goal
+    itob
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_withdraw_funds_route@4:
+    // smart_contracts/fundraiser/contract.py:34
+    // @arc4.abimethod
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    callsub withdraw_funds
+    int 1
+    return
+
+
+// smart_contracts.fundraiser.contract.FundraiserApp.create_campaign(goal_amount: uint64) -> void:
+create_campaign:
+    // smart_contracts/fundraiser/contract.py:14-18
+    // @arc4.abimethod(
+    //     allow_actions=["NoOp"],  # Allow only NoOp actions
+    //     create="require",        # Require this method for contract creation
+    // )
+    // def create_campaign(self, goal_amount: UInt64) -> None:
+    proto 1 0
+    // smart_contracts/fundraiser/contract.py:11
+    // goal_amount: UInt64 # Campaign goal in microAlgos
+    byte "goal_amount"
+    // smart_contracts/fundraiser/contract.py:20
+    // self.goal_amount = goal_amount
+    frame_dig -1
+    app_global_put
+    // smart_contracts/fundraiser/contract.py:12
+    // total_raised: UInt64 # Total amount raised
+    byte "total_raised"
+    // smart_contracts/fundraiser/contract.py:21
+    // self.total_raised = UInt64(0)
+    int 0
+    app_global_put
+    retsub
+
+
+// smart_contracts.fundraiser.contract.FundraiserApp.contribute(contribution: uint64) -> void:
+contribute:
+    // smart_contracts/fundraiser/contract.py:23-24
+    // @arc4.abimethod
+    // def contribute(self, contribution: gtxn.PaymentTransaction) -> None:
+    proto 1 0
+    // smart_contracts/fundraiser/contract.py:26
+    // assert contribution.receiver == Global.current_application_address
+    frame_dig -1
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    assert
+    // smart_contracts/fundraiser/contract.py:27
+    // self.total_raised += contribution.amount
+    int 0
+    // smart_contracts/fundraiser/contract.py:12
+    // total_raised: UInt64 # Total amount raised
+    byte "total_raised"
+    // smart_contracts/fundraiser/contract.py:27
+    // self.total_raised += contribution.amount
+    app_global_get_ex
+    assert // check self.total_raised exists
+    frame_dig -1
+    gtxns Amount
+    +
+    // smart_contracts/fundraiser/contract.py:12
+    // total_raised: UInt64 # Total amount raised
+    byte "total_raised"
+    // smart_contracts/fundraiser/contract.py:27
+    // self.total_raised += contribution.amount
+    swap
+    app_global_put
+    retsub
+
+
+// smart_contracts.fundraiser.contract.FundraiserApp.check_goal() -> uint64:
+check_goal:
+    // smart_contracts/fundraiser/contract.py:29-30
+    // @arc4.abimethod
+    // def check_goal(self) -> UInt64:
+    proto 0 1
+    // smart_contracts/fundraiser/contract.py:32
+    // return self.total_raised
+    int 0
+    // smart_contracts/fundraiser/contract.py:12
+    // total_raised: UInt64 # Total amount raised
+    byte "total_raised"
+    // smart_contracts/fundraiser/contract.py:32
+    // return self.total_raised
+    app_global_get_ex
+    assert // check self.total_raised exists
+    retsub
+
+
+// smart_contracts.fundraiser.contract.FundraiserApp.withdraw_funds() -> void:
+withdraw_funds:
+    // smart_contracts/fundraiser/contract.py:34-35
+    // @arc4.abimethod
+    // def withdraw_funds(self) -> None:
+    proto 0 0
+    // smart_contracts/fundraiser/contract.py:37-38
+    // #assert Txn.sender == Global.creator_address
+    // assert self.total_raised >= self.goal_amount
+    int 0
+    // smart_contracts/fundraiser/contract.py:12
+    // total_raised: UInt64 # Total amount raised
+    byte "total_raised"
+    // smart_contracts/fundraiser/contract.py:37-38
+    // #assert Txn.sender == Global.creator_address
+    // assert self.total_raised >= self.goal_amount
+    app_global_get_ex
+    assert // check self.total_raised exists
+    int 0
+    // smart_contracts/fundraiser/contract.py:11
+    // goal_amount: UInt64 # Campaign goal in microAlgos
+    byte "goal_amount"
+    // smart_contracts/fundraiser/contract.py:37-38
+    // #assert Txn.sender == Global.creator_address
+    // assert self.total_raised >= self.goal_amount
+    app_global_get_ex
+    assert // check self.goal_amount exists
+    >=
+    assert
+    // smart_contracts/fundraiser/contract.py:40-44
+    // itxn.Payment(
+    //     receiver=Global.creator_address,
+    //     amount=self.total_raised,
+    //     close_remainder_to=Global.creator_address,
+    // ).submit()
+    itxn_begin
+    // smart_contracts/fundraiser/contract.py:41
+    // receiver=Global.creator_address,
+    global CreatorAddress
+    // smart_contracts/fundraiser/contract.py:42
+    // amount=self.total_raised,
+    int 0
+    // smart_contracts/fundraiser/contract.py:12
+    // total_raised: UInt64 # Total amount raised
+    byte "total_raised"
+    // smart_contracts/fundraiser/contract.py:42
+    // amount=self.total_raised,
+    app_global_get_ex
+    assert // check self.total_raised exists
+    // smart_contracts/fundraiser/contract.py:43
+    // close_remainder_to=Global.creator_address,
+    global CreatorAddress
+    itxn_field CloseRemainderTo
+    itxn_field Amount
+    itxn_field Receiver
+    // smart_contracts/fundraiser/contract.py:40
+    // itxn.Payment(
+    int pay
+    itxn_field TypeEnum
+    int 0
+    itxn_field Fee
+    // smart_contracts/fundraiser/contract.py:40-44
+    // itxn.Payment(
+    //     receiver=Global.creator_address,
+    //     amount=self.total_raised,
+    //     close_remainder_to=Global.creator_address,
+    // ).submit()
+    itxn_submit
+    retsub

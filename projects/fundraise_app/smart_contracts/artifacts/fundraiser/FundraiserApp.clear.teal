@@ -1,0 +1,7 @@
+#pragma version 10
+
+smart_contracts.fundraiser.contract.FundraiserApp.clear_state_program:
+    // smart_contracts/fundraiser/contract.py:10
+    // class FundraiserApp(arc4.ARC4Contract):
+    int 1
+    return
