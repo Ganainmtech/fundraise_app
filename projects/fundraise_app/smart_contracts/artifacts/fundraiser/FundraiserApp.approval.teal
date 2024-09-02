@@ -177,15 +177,19 @@ withdraw_funds:
     // @arc4.abimethod
     // def withdraw_funds(self) -> None:
     proto 0 0
-    // smart_contracts/fundraiser/contract.py:37-38
-    // #assert Txn.sender == Global.creator_address
+    // smart_contracts/fundraiser/contract.py:37
+    // assert Txn.sender == Global.creator_address
+    txn Sender
+    global CreatorAddress
+    ==
+    assert
+    // smart_contracts/fundraiser/contract.py:38
     // assert self.total_raised >= self.goal_amount
     int 0
     // smart_contracts/fundraiser/contract.py:12
     // total_raised: UInt64 # Total amount raised
     byte "total_raised"
-    // smart_contracts/fundraiser/contract.py:37-38
-    // #assert Txn.sender == Global.creator_address
+    // smart_contracts/fundraiser/contract.py:38
     // assert self.total_raised >= self.goal_amount
     app_global_get_ex
     assert // check self.total_raised exists
@@ -193,8 +197,7 @@ withdraw_funds:
     // smart_contracts/fundraiser/contract.py:11
     // goal_amount: UInt64 # Campaign goal in microAlgos
     byte "goal_amount"
-    // smart_contracts/fundraiser/contract.py:37-38
-    // #assert Txn.sender == Global.creator_address
+    // smart_contracts/fundraiser/contract.py:38
     // assert self.total_raised >= self.goal_amount
     app_global_get_ex
     assert // check self.goal_amount exists
